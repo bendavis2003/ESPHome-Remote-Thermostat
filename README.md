@@ -1,5 +1,5 @@
 # ESPHome-Remote-Thermostat
-A remote to control a Generic Thermostat in Home Assistant. Screen features 3 seperate pages that cycle when the rotary encoder is pressed to customize the way information displayed.
+A remote to control a Generic Thermostat (for heating only) in Home Assistant. Screen features 3 seperate pages that cycle when the rotary encoder is pressed to customize the way information displayed.
 
 Screen 1 - top of the screen shows the thermostat or room name, under that in a large readable font is the current temperature reading from the sendor and under that is a smaller font showing the value the temperature is set to.
 
