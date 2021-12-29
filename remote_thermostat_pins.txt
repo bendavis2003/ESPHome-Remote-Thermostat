@@ -1,0 +1,22 @@
+Rotary encoder
+gnd: G
++: VIN
+sw: D4
+dt: D7
+clk: D6
+
+OLED
+VCC: 3V
+GND: G 
+SCL: D2
+SDA: D1
+
+add to sensor.yaml in Home Assistant (add "sensor: !include sensor.yaml" to configuration.yaml if not there):
+ - platform: template
+   sensors:
+    set_temp_office:
+      value_template: "{{states.climate.desk_heater.attributes.temperature}}" #set to your generic thermostat
+ - platform: template
+   sensors:
+    hvac_mode:
+      value_template: "{{state_attr('climate.desk_heater', 'hvac_action')}}" #set to your generic thermostat

@@ -1,0 +1,128 @@
+esphome:
+  name: remote-thermostat
+
+esp8266:
+  board: nodemcuv2
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: "password"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+time:
+  - platform: homeassistant #get the time from Home Assistant
+    id: time1
+
+sensor:
+  - platform: homeassistant #get the current temperature from a sensor on Home Assistant
+    id: inside_temperature
+    entity_id: sensor.office_temperature #set this to your temperature sensor entity
+    internal: true
+
+  - platform: homeassistant #get the temperature the generic thermostat is set to
+    entity_id: sensor.set_temp_office #sensor created in sensor.yaml
+    id: set_temperature
+
+  - platform: rotary_encoder
+    name: "Rotary Encoder"
+    id: knob
+    pin_a: D6
+    pin_b: D7
+    on_value:
+      then:
+      - delay: 0.5s
+      - homeassistant.service:
+          service: climate.set_temperature
+          data_template:
+            entity_id: climate.desk_heater
+            temperature: !lambda "return id(knob).state;"
+ 
+text_sensor:
+  - platform: homeassistant #get the heating status of your generic thermostat
+    entity_id: sensor.hvac_mode #sensor created in sensor.yaml
+    id: hvac_mode
+
+binary_sensor:
+  - platform: gpio
+    id: button
+    pin: 
+      number: D4
+      inverted: true
+    on_press:
+        then:
+          display.page.show_next: my_display
+
+i2c:
+  sda: D1
+  scl: D2
+  scan: false
+
+display:
+  - platform: ssd1306_i2c
+    update_interval: 0.02s
+    model: "SH1106 128x64"
+    reset_pin: D0
+    address: 0x3C
+    id: my_display
+    pages:
+      - id: page1
+        lambda: |-
+          it.printf(64, 0, id(font1), TextAlign::TOP_CENTER, "thermostat name");
+          if (id(inside_temperature).has_state()) {
+            it.printf(64, 2, id(font3), TextAlign::TOP_CENTER , "%.1f°", id(inside_temperature).state);
+          }
+          if (id(set_temperature).has_state()) {
+            it.printf(64, 40, id(font2), TextAlign::TOP_CENTER , "%.1f°", id(set_temperature).state);
+          }
+      - id: page2
+        lambda: |-
+          {id(ani_bongo).next_frame(); it.image(25, 0, id(ani_bongo));}
+          if (id(inside_temperature).has_state()) {
+            it.printf(0, 0, id(font4), TextAlign::TOP_LEFT , "%.1f°", id(inside_temperature).state);
+          }
+          if (id(set_temperature).has_state()) {
+            it.printf(0, 64, id(font4), TextAlign::BOTTOM_LEFT , "%.1f°", id(set_temperature).state);
+          }
+      - id: page3
+        lambda: |-
+          if (id(hvac_mode).state == "heating") {id(ani_fire).next_frame(); it.image(1, 0, id(ani_fire));}
+          else {id(ani_off).next_frame(); it.image(1, 0, id(ani_off));}
+          if (id(inside_temperature).has_state()) {
+            it.printf(65, 36, id(font4), TextAlign::TOP_CENTER , "%.1f°", id(inside_temperature).state);
+          }
+          if (id(set_temperature).has_state()) {
+            it.printf(65, 12, id(font5), TextAlign::TOP_CENTER , "%.1f°", id(set_temperature).state);
+          }
+
+animation:
+  - file: "_icons/thermostat/bongo.gif"
+    id: ani_bongo
+  - file: "_icons/thermostat/off.gif"
+    id: ani_off
+  - file: "_icons/thermostat/fire.gif"
+    id: ani_fire
+
+font:
+  - file: "_fonts/nasalization.ttf"
+    id: font1
+    size: 12
+  - file: "_fonts/refsan.ttf"
+    id: font2
+    size: 20
+  - file: "_fonts/refsan.ttf"
+    id: font3
+    size: 40
+  - file: "_fonts/refsan.ttf"
+    id: font4
+    size: 12
+  - file: "_fonts/refsan.ttf"
+    id: font5
+    size: 16
